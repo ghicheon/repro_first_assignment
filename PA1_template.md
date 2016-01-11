@@ -137,5 +137,5 @@ print( weekdays_sum / weekdays_n )
 
 
 
-p.S.
-FYI.. most of the work was done it in the previous session. I modified that little bit..
+P.S.
+FYI.. most of the work was done it in the previous session by me. I modified that little bit..
