@@ -1,0 +1,132 @@
+---
+title: 'Reproducible Research: Peer Assessment 1'
+output:
+  html_document:
+  keep_md: yes
+  pdf_document: default
+---
+
+
+## Loading and preprocessing the data
+```{r}
+d <- read.csv('activity.csv')
+```
+
+
+## What is mean total number of steps taken per day?
+```{r}
+library(plyr)
+out <- ddply(d, c("date"),summarize, steps=sum(steps))
+n <- nrow(out)
+mean_val <- sum(out$steps, na.rm = T) / n
+median_val <- median(out$steps, na.rm=T)
+
+mean_val
+median_val 
+```
+
+
+```{r scatterplot0,fig.height=4}
+hist(out$steps ,breaks=100, main=" total number of steps taken per day",
+     xlab="steps", ylab="frequency", col="pink")
+dev.copy(png,'plot0.png')
+dev.off()
+```
+
+
+## What is the average daily activity pattern?
+
+```{r}
+days <- nrow(out)
+interval_cnt <- 24*60/5   
+
+out2 <- rep(0, interval_cnt)
+
+for(i in 1:interval_cnt)
+{
+    some <- seq(i, nrow(d), by= interval_cnt)
+    out2[i] <- mean( d[some,]$steps, na.rm=T)
+}
+```
+
+
+```{r scatterplot1,fig.height=4}
+plot(out2 , type="l", main="average daily activity pattern",
+     xlab="5 minutes interval",ylab="steps", col="red" , lwd=3)
+dev.copy(png,'plot1.png')
+dev.off()
+```
+
+
+
+```{r}
+max_interal <- max(out2)
+```
+
+## Imputing missing values
+```{r}
+d2 <- d
+for(i in 1:nrow(d2) )
+{
+    if( is.na(d2[i,1])  == TRUE)
+    {
+       d2[i,1] <- out2[ i %% 288 + 1]
+
+    }
+}
+
+out_imputing <- ddply(d2, c("date"),summarize, steps=sum(steps))
+```
+
+
+```{r scatterplot2,fig.height=4}
+hist(out_imputing$steps ,breaks=100, 
+     main="total number of steps taken per day after IMPUTING" , xlab="steps",ylab="frequency", col="magenta")
+dev.copy(png,'plot2.png')
+dev.off()
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+As we expected, peopel tend to move more on the weekend.
+I'll calculate the average value of steps on the weekdays/weekends.
+
+
+FYI, I set the language to english becuase I found out weekdays() returns  the value from this setting. some web browser might not support mine.
+
+I also made the new column weekend.if the date is weekend, it gets 1. 
+```{r}
+out3 <- ddply(d2, c("date"),summarize, steps=sum(steps))
+
+weekdays_n <- 0
+weekend_n <- 0
+
+weekdays_sum <-0
+weekend_sum <- 0
+
+Sys.setlocale("LC_TIME", "English")
+
+for(i in 1:nrow(out3))
+{
+    if( weekdays( as.Date(out3[i,1])) == "Sunday" || 
+        weekdays( as.Date(out3[i,1])) == "Saturday")
+    {
+       weekend_n <- weekend_n +1 
+       weekend_sum <- weekend_sum + out3[i,2]
+       out3$weekend <- 1
+    
+    }
+    else
+    {
+       weekdays_n <- weekdays_n + 1
+       weekdays_sum <- weekdays_sum + out3[i,2]
+       out3$weekend <- 0
+    
+    }
+}
+
+# print average steps in weekend & weekdays
+print( weekend_sum / weekend_n )
+print( weekdays_sum / weekdays_n )
+```
+
+
