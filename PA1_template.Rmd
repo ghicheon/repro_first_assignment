@@ -14,6 +14,10 @@ d <- read.csv('activity.csv')
 
 
 ## What is mean total number of steps taken per day?
+the number of stpes is devided by the number of days. very simple..
+
+I used median function for median value.
+
 ```{r}
 library(plyr)
 out <- ddply(d, c("date"),summarize, steps=sum(steps))
@@ -35,6 +39,9 @@ dev.off()
 
 
 ## What is the average daily activity pattern?
+1 day has 24 hours. 1 hour has 60 minutes. therefore 24*60 means minutes of a day.
+24*60 is divided by 5 because they made data  every 5 minutes.
+
 
 ```{r}
 days <- nrow(out)
@@ -130,3 +137,5 @@ print( weekdays_sum / weekdays_n )
 ```
 
 
+p.S.
+FYI.. most of the work was done it in the previous session. I modified that little bit..

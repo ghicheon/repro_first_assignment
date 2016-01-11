@@ -1,6 +1,7 @@
 # Reproducible Research: Peer Assessment 1
 
 
+
 ## Loading and preprocessing the data
 
 ```r
@@ -9,6 +10,10 @@ d <- read.csv('activity.csv')
 
 
 ## What is mean total number of steps taken per day?
+
+the number of stpes is devided by the number of days. very simple..
+
+I used median function for median value.
 
 ```r
 library(plyr)
@@ -33,6 +38,10 @@ median_val
 ```
 
 ## What is the average daily activity pattern?
+
+1 day has 24 hours. 1 hour has 60 minutes. therefore 24*60 means minutes of a day.
+24*60 is divided by 5 because they made data  every 5 minutes.
+
 
 
 ```r
@@ -73,6 +82,13 @@ for(i in 1:nrow(d2) )
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+As we expected, peopel tend to move more on the weekend.
+I'll calculate the average value of steps on the weekdays/weekends.
+
+
+FYI, I set the language to english becuase I found out weekdays() returns  the value from this setting. some web browser might not support mine.
+
+I also made the new column weekend.if the date is weekend, it gets 1. 
 
 ```r
 out3 <- ddply(d2, c("date"),summarize, steps=sum(steps))
@@ -121,3 +137,5 @@ print( weekdays_sum / weekdays_n )
 
 
 
+p.S.
+FYI.. most of the work was done it in the previous session. I modified that little bit..
