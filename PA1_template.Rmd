@@ -1,34 +1,58 @@
 ---
-title: 'Reproducible Research: Peer Assessment 1'
+title: 'Reproducible Research: Assignment 1'
 output:
   html_document:
   keep_md: yes
   pdf_document: default
 ---
 
+This assignment is about analizing and showing interesting imformation on human activity.   
+The file activity.csv is given. This file consists of 15768 rows. each row has 3 columns such as steps,date, and interval.  
+interval has value from 0,5,10,15 and so on until 2355. 0 means activity from 0 minute to 5 minute of a day.  5 means activity from 5 to 10 of a day and so on.   
 
-## Loading and preprocessing the data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading and preprocessing the data
+First of all, I loaded csv file using read.csv. After that, some rows are showed. 
+
 ```{r}
 d <- read.csv('activity.csv')
 ```
 
+##basic structure
+It shows basic structure of this data file.
+```{r}
+head(d)
+summary(d)
+nrow(d)
+```
 
-## What is mean total number of steps taken per day?
-the number of stpes is devided by the number of days. very simple..
 
-I used median function for median value.
+# What is mean total number of steps taken per day?
+ddply is used to get the number of total steps for each day.
+mean value can be gotten through dividing the number of stpes by the number of days.  
+median value can be showed by getting median value after sorting.  
+
+median/mean functions are used for getting values simply.  
 
 ```{r}
 library(plyr)
 out <- ddply(d, c("date"),summarize, steps=sum(steps))
-n <- nrow(out)
-mean_val <- sum(out$steps, na.rm = T) / n
+
+mean_val <-mean(out$steps, na.rm = T)
 median_val <- median(out$steps, na.rm=T)
 
 mean_val
 median_val 
+head(out)
 ```
 
+
+##histogram
+The output graph is saved in plot0.png file.
 
 ```{r scatterplot0,fig.height=4}
 hist(out$steps ,breaks=100, main=" total number of steps taken per day",
@@ -38,10 +62,14 @@ dev.off()
 ```
 
 
-## What is the average daily activity pattern?
-1 day has 24 hours. 1 hour has 60 minutes. therefore 24*60 means minutes of a day.
+# What is the average daily activity pattern?
+1 day has 24 hours. 1 hour has 60 minutes. Therefore 24*60 means minutes of a day.  
 24*60 is divided by 5 because they made data  every 5 minutes.
+As a result, total number of interval count is 288 (24*60/5).  
+"for loop"" is used to get average values for each time interval.  
+For example, mean(first row of d + 289th row + 577th row ..... 16993th row + 17281th row)   is the average steps value of first interval.   
 
+out2 is used for saving the mean value for each interval. 
 
 ```{r}
 days <- nrow(out)
@@ -56,7 +84,7 @@ for(i in 1:interval_cnt)
 }
 ```
 
-
+##Plot it.
 ```{r scatterplot1,fig.height=4}
 plot(out2 , type="l", main="average daily activity pattern",
      xlab="5 minutes interval",ylab="steps", col="red" , lwd=3)
@@ -64,78 +92,153 @@ dev.copy(png,'plot1.png')
 dev.off()
 ```
 
-
+##maximum active interval value
 
 ```{r}
-max_interal <- max(out2)
+max_interval <- max(out2)
+print(max_interval)
 ```
 
-## Imputing missing values
+
+# Imputing missing values
+set the missing value to the average. out2 is the daily activity pattern.   
+As calculated before, 288(24*60/5) is interval count of a day.
 ```{r}
-d2 <- d
-for(i in 1:nrow(d2) )
+d_imputed <- d
+for(i in 1:nrow(d_imputed) )
 {
-    if( is.na(d2[i,1])  == TRUE)
+    if( is.na(d_imputed[i,1])  == TRUE)
     {
-       d2[i,1] <- out2[ i %% 288 + 1]
+       d_imputed[i,1] <- out2[ i %% 288 + 1]
 
     }
 }
 
-out_imputing <- ddply(d2, c("date"),summarize, steps=sum(steps))
+out4hist <- ddply(d_imputed, c("date"),summarize, steps=sum(steps))
 ```
 
-
+##histogram
 ```{r scatterplot2,fig.height=4}
-hist(out_imputing$steps ,breaks=100, 
+hist(out4hist$steps ,breaks=100, 
      main="total number of steps taken per day after IMPUTING" , xlab="steps",ylab="frequency", col="magenta")
 dev.copy(png,'plot2.png')
 dev.off()
 ```
 
-## Are there differences in activity patterns between weekdays and weekends?
+# Are there differences in activity patterns between weekdays and weekends?
 As we expected, peopel tend to move more on the weekend.
-I'll calculate the average value of steps on the weekdays/weekends.
+I'll calculate the average value of steps on the weekdays/weekends.   
+
+I found timeDate package after struggling from identifying weekend.   
 
 
-FYI, I set the language to english becuase I found out weekdays() returns  the value from this setting. some web browser might not support mine.
+weekdays_n : the number of weekdays  
+weekdays_sum: total number of steps on weekdays.  
 
-I also made the new column weekend.if the date is weekend, it gets 1. 
+weekend_n : the number of weekend.    
+weekend_sum: total number of steps on weekend.
+
+
+
 ```{r}
-out3 <- ddply(d2, c("date"),summarize, steps=sum(steps))
+#install.packages("timeDate")
+library(timeDate)
+
+out3 <- ddply(d_imputed, c("date"),summarize, steps=sum(steps))
+
 
 weekdays_n <- 0
-weekend_n <- 0
-
 weekdays_sum <-0
+
+weekend_n <- 0
 weekend_sum <- 0
 
-Sys.setlocale("LC_TIME", "English")
 
 for(i in 1:nrow(out3))
 {
-    if( weekdays( as.Date(out3[i,1])) == "Sunday" || 
-        weekdays( as.Date(out3[i,1])) == "Saturday")
+    if( as.logical(isWeekend(as.Date(out3[i,1]), wday = 1:5)) )
     {
        weekend_n <- weekend_n +1 
        weekend_sum <- weekend_sum + out3[i,2]
-       out3$weekend <- 1
     
     }
     else
     {
        weekdays_n <- weekdays_n + 1
        weekdays_sum <- weekdays_sum + out3[i,2]
-       out3$weekend <- 0
     
     }
 }
+```
 
-# print average steps in weekend & weekdays
+
+
+##print average steps in weekend & weekdays
+As expected, people walk more on weekends  compared to weekdays.
+```{r}
 print( weekend_sum / weekend_n )
 print( weekdays_sum / weekdays_n )
 ```
 
 
-P.S.
-FYI.. most of the work was done in the previous session by me. I modified that little bit..
+
+
+
+## weekdays vs weekends with plotting
+
+24*60/5 means the number of interval count per a day. I calculated above.  
+
+weekdays_arr: it keep data about weekdays for plotting  
+weekends_arr: it keep data about weekends for plotting  
+if it is record for weekends, the value is adding to weekends_arr using idx value.
+
+idx:  index for weekdays_arr, weekends_arr 
+
+```{r}
+
+interval_cnt <- 24*60/5   
+weekdays_arr<- rep(0, interval_cnt)
+weekends_arr <- rep(0,interval_cnt)
+
+for(i in 1:nrow(d_imputed) )
+{
+    steps    = d_imputed[i,1]
+    date     = d_imputed[i,2]
+    idx      = d_imputed[i,3]/5        
+    
+    if( as.logical(isWeekend(as.Date(date), wday = 1:5)) )
+    {
+        weekdays_arr[idx] <- weekdays_arr[idx] + steps
+  
+    }
+    else
+    {
+        weekends_arr[idx] <- weekends_arr[idx] + steps
+    }
+
+}
+
+```
+
+
+###weekdays
+```{r}
+
+
+   
+plot(weekdays_arr , type="l", main="weekdays activity pattern",
+     xlab="5 minutes interval",ylab="steps", col="blue" , lwd=3)
+dev.copy(png,'plot3.png')
+dev.off()
+```
+
+###weekends
+```{r}
+plot(weekends_arr , type="l", main="weekends activity pattern",
+     xlab="5 minutes interval",ylab="steps", col="blue" , lwd=3)
+dev.copy(png,'plot4.png')
+dev.off()
+```
+
+
+
